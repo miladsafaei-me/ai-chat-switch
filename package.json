@@ -1,0 +1,255 @@
+{
+    "name": "ai-chat-switch",
+    "displayName": "AI Chat Switch",
+    "description": "One editor tab and one unified session history for Claude Code and Codex.",
+    "version": "1.1.0",
+    "publisher": "miladsafaei",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/miladsafaei-me/ai-chat-switch.git"
+    },
+    "engines": {
+        "vscode": "^1.96.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "aiChatSwitchContainer",
+                    "title": "AI Chats",
+                    "icon": "resources/ai-chats.svg"
+                }
+            ]
+        },
+        "views": {
+            "aiChatSwitchContainer": [
+                {
+                    "id": "aiChatSwitch.sessions",
+                    "name": "Sessions",
+                    "icon": "resources/ai-chats.svg"
+                }
+            ]
+        },
+        "viewsWelcome": [
+            {
+                "view": "aiChatSwitch.sessions",
+                "contents": "No Claude or Codex sessions found for this project yet.\n[Start a Claude session](command:aiChatSwitch.newClaude)\n[Start a Codex session](command:aiChatSwitch.newCodex)\nSessions from other projects are hidden. [Show all projects](command:aiChatSwitch.toggleScope)"
+            }
+        ],
+        "commands": [
+            {
+                "command": "aiChatSwitch.openClaude",
+                "title": "Open Claude",
+                "category": "AI Chat"
+            },
+            {
+                "command": "aiChatSwitch.openCodex",
+                "title": "Open Codex",
+                "category": "AI Chat"
+            },
+            {
+                "command": "aiChatSwitch.toggle",
+                "title": "Toggle Between Claude and Codex",
+                "category": "AI Chat"
+            },
+            {
+                "command": "aiChatSwitch.newClaude",
+                "title": "New Claude Conversation",
+                "category": "AI Chat"
+            },
+            {
+                "command": "aiChatSwitch.newCodex",
+                "title": "New Codex Conversation",
+                "category": "AI Chat"
+            },
+            {
+                "command": "aiChatSwitch.openSession",
+                "title": "Open Session",
+                "category": "AI Chat"
+            },
+            {
+                "command": "aiChatSwitch.searchSessions",
+                "title": "Search All Sessions",
+                "category": "AI Chat",
+                "icon": "$(search)"
+            },
+            {
+                "command": "aiChatSwitch.refreshSessions",
+                "title": "Refresh Session List",
+                "category": "AI Chat",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "aiChatSwitch.toggleScope",
+                "title": "Toggle Project Scope",
+                "category": "AI Chat",
+                "icon": "$(filter)"
+            },
+            {
+                "command": "aiChatSwitch.filterAgent",
+                "title": "Filter by Agent",
+                "category": "AI Chat",
+                "icon": "$(list-filter)"
+            },
+            {
+                "command": "aiChatSwitch.revealSessionFile",
+                "title": "Reveal Transcript File",
+                "category": "AI Chat",
+                "icon": "$(go-to-file)"
+            },
+            {
+                "command": "aiChatSwitch.copySessionId",
+                "title": "Copy Session ID",
+                "category": "AI Chat"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "aiChatSwitch.openClaude",
+                "key": "ctrl+alt+a"
+            },
+            {
+                "command": "aiChatSwitch.openCodex",
+                "key": "ctrl+alt+g"
+            },
+            {
+                "command": "aiChatSwitch.toggle",
+                "key": "ctrl+alt+x"
+            },
+            {
+                "command": "aiChatSwitch.searchSessions",
+                "key": "ctrl+alt+s"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "aiChatSwitch.searchSessions",
+                    "when": "view == aiChatSwitch.sessions",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "aiChatSwitch.filterAgent",
+                    "when": "view == aiChatSwitch.sessions",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "aiChatSwitch.toggleScope",
+                    "when": "view == aiChatSwitch.sessions",
+                    "group": "navigation@3"
+                },
+                {
+                    "command": "aiChatSwitch.refreshSessions",
+                    "when": "view == aiChatSwitch.sessions",
+                    "group": "navigation@4"
+                },
+                {
+                    "command": "aiChatSwitch.newClaude",
+                    "when": "view == aiChatSwitch.sessions",
+                    "group": "1_new@1"
+                },
+                {
+                    "command": "aiChatSwitch.newCodex",
+                    "when": "view == aiChatSwitch.sessions",
+                    "group": "1_new@2"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "aiChatSwitch.revealSessionFile",
+                    "when": "view == aiChatSwitch.sessions && viewItem == aiChatSession",
+                    "group": "inline"
+                },
+                {
+                    "command": "aiChatSwitch.copySessionId",
+                    "when": "view == aiChatSwitch.sessions && viewItem == aiChatSession",
+                    "group": "9_copy"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "aiChatSwitch.openSession",
+                    "when": "false"
+                },
+                {
+                    "command": "aiChatSwitch.revealSessionFile",
+                    "when": "false"
+                },
+                {
+                    "command": "aiChatSwitch.copySessionId",
+                    "when": "false"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "AI Chat Switch",
+            "properties": {
+                "aiChatSwitch.sessionScope": {
+                    "type": "string",
+                    "enum": [
+                        "workspace",
+                        "all"
+                    ],
+                    "enumDescriptions": [
+                        "Only sessions whose working directory is inside an open workspace folder.",
+                        "Sessions from every project on this machine."
+                    ],
+                    "default": "workspace",
+                    "description": "Which sessions the unified list shows."
+                },
+                "aiChatSwitch.agents": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "claude",
+                            "codex"
+                        ]
+                    },
+                    "default": [
+                        "claude",
+                        "codex"
+                    ],
+                    "description": "Agents included in the unified session list."
+                },
+                "aiChatSwitch.maxSessions": {
+                    "type": "number",
+                    "default": 200,
+                    "minimum": 10,
+                    "maximum": 2000,
+                    "description": "How many of the most recent sessions per agent are read from disk."
+                },
+                "aiChatSwitch.groupByDate": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Group the session list under Today / Yesterday / Previous 7 days / Older."
+                },
+                "aiChatSwitch.claudeProjectsPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Override the Claude Code transcript directory (defaults to ~/.claude/projects)."
+                },
+                "aiChatSwitch.codexSessionsPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Override the Codex rollout directory (defaults to ~/.codex/sessions)."
+                },
+                "aiChatSwitch.autoRefreshSeconds": {
+                    "type": "number",
+                    "default": 45,
+                    "minimum": 0,
+                    "maximum": 600,
+                    "description": "Rescan interval while the session list is visible. 0 disables auto refresh."
+                }
+            }
+        }
+    }
+}
