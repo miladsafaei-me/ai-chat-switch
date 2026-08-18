@@ -1,5 +1,7 @@
 # AI Chat Switch
 
+![The AI Chats view listing Claude and Codex sessions side by side](media/ai-chat-switch-demo-en.png)
+
 A single VS Code extension that makes Claude Code and Codex feel like one tool:
 they share one editor tab, one status-bar switch, and one session history.
 
@@ -65,3 +67,15 @@ npx @vscode/vsce package
 ```
 
 There is no build step — the extension is plain CommonJS JavaScript.
+
+## Screenshots
+
+`media/demo.html` is a code-authored mock of the workbench, themed with VS Code's
+own `2026-dark` palette and its real codicon font. Regenerate the images with:
+
+```bash
+node media/build-codicon-css.js   # embeds the codicon font from the local VS Code install
+node media/shoot.js               # renders media/ai-chat-switch-demo-{en,fa}.png at 3200x1800
+```
+
+`shoot.js` needs Playwright's Chromium (`npx playwright install chromium`).

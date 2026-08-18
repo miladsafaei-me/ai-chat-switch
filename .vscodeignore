@@ -3,3 +3,5 @@
 .vscodeignore
 node_modules/**
 *.vsix
+media/**
+!media/ai-chat-switch-demo-en.png

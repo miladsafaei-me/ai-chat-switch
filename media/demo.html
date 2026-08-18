@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI Chat Switch — demo</title>
+<link rel="stylesheet" href="codicon.css">
+<style>
+:root {
+    /* VS Code "2026 Dark" default theme, read from theme-defaults/themes/2026-dark.json */
+    --chrome: #191A1B;
+    --editor: #121314;
+    --border: #2A2B2C;
+    --fg: #BFBFBF;
+    --fg-strong: #EDEDED;
+    --fg-muted: #8C8C8C;
+    --fg-dim: #69696A;
+    --active-tab: #383839;
+    --activity-active: #313233;
+    --list-hover: #FFFFFF14;
+    --list-selected: #FFFFFF22;
+    --accent: #3994BC;
+    --claude: #D97757;
+    --input-border: #333536;
+    --ui-font: "Adwaita Sans", Cantarell, "Noto Sans", system-ui, sans-serif;
+    --mono-font: "Adwaita Mono", "DejaVu Sans Mono", monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    width: 1600px;
+    height: 900px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(120% 120% at 50% 0%, #232527 0%, #0C0D0E 70%);
+    font-family: var(--ui-font);
+    -webkit-font-smoothing: antialiased;
+}
+
+.codicon {
+    font-family: "codicon";
+    font-size: 16px;
+    line-height: 1;
+    font-weight: normal;
+    display: inline-block;
+}
+
+#vscode-window {
+    width: 1520px;
+    height: 824px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--editor);
+    box-shadow: 0 40px 90px -20px rgba(0, 0, 0, .85), 0 0 0 1px rgba(255, 255, 255, .06);
+}
+
+/* Tab strip */
+#editor-tabs {
+    height: 44px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px 0 6px;
+    background: var(--editor);
+}
+.tab-list { display: flex; align-items: center; gap: 2px; }
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 8px;
+    color: var(--fg-dim);
+    font-size: 14px;
+}
+.tab.is-active { background: var(--active-tab); color: var(--fg); font-weight: 600; }
+.tab .agent-mark { width: 17px; height: 17px; }
+.tab-actions { display: flex; align-items: center; gap: 16px; color: var(--fg-muted); }
+.tab-actions .agent-mark { width: 17px; height: 17px; }
+
+.agent-mark { display: inline-block; background-repeat: no-repeat; background-size: contain; background-position: center; }
+.agent-mark.is-claude { background-image: url("../resources/claude.svg"); }
+.agent-mark.is-codex { background-image: url("../resources/codex.svg"); }
+
+/* Workbench body */
+#workbench { flex: 1; display: flex; min-height: 0; }
+
+#activity-bar {
+    width: 52px;
+    flex: none;
+    background: var(--chrome);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 0 8px;
+    gap: 4px;
+}
+#activity-bar .activity-item {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fg-muted);
+}
+#activity-bar .activity-item .codicon { font-size: 22px; }
+#activity-bar .activity-item.is-active { background: var(--activity-active); color: var(--fg); }
+#activity-bar .activity-spacer { flex: 1; }
+#activity-bar .activity-item .ai-chats-glyph {
+    width: 23px; height: 23px;
+    background-color: currentColor;
+    -webkit-mask-image: url("../resources/ai-chats.svg");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    mask-image: url("../resources/ai-chats.svg");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+}
+#activity-bar .activity-item .agent-mark { width: 22px; height: 22px; }
+
+/* Sidebar */
+#ai-chats-sidebar {
+    width: 440px;
+    flex: none;
+    background: var(--chrome);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+#ai-chats-sidebar .sidebar-title {
+    height: 40px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 6px 0 20px;
+}
+#ai-chats-sidebar .sidebar-title h1 {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--fg);
+}
+#ai-chats-sidebar .sidebar-title .view-description {
+    font-size: 11.5px;
+    color: var(--fg-muted);
+    white-space: nowrap;
+}
+#ai-chats-sidebar .title-actions { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+#ai-chats-sidebar .title-actions .action {
+    width: 26px; height: 26px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--fg-muted);
+}
+#ai-chats-sidebar .title-actions .action .codicon { font-size: 16px; }
+
+#session-tree { padding: 2px 0 0; overflow: hidden; }
+.tree-group {
+    display: flex; align-items: center; gap: 4px;
+    height: 26px; padding-inline-start: 6px;
+    font-size: 12.5px; font-weight: 600; color: var(--fg);
+}
+.tree-group .codicon { font-size: 16px; color: var(--fg-muted); }
+.tree-group .group-count { font-weight: 400; color: var(--fg-muted); font-size: 12px; margin-left: 4px; }
+
+.session-row {
+    display: flex; align-items: center; gap: 8px;
+    height: 26px; padding-inline: 26px 10px;
+    white-space: nowrap;
+}
+.session-row.is-selected { background: var(--list-selected); }
+.session-row .agent-mark { width: 16px; height: 16px; flex: none; }
+.session-row .session-title {
+    font-size: 13px; color: var(--fg);
+    overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto;
+}
+.session-row.is-selected .session-title { color: var(--fg-strong); }
+.session-row .session-meta {
+    font-size: 11.5px; color: var(--fg-muted);
+    padding-inline-start: 8px; flex: none;
+    overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Editor / chat panel */
+#chat-panel {
+    flex: 1;
+    background: var(--editor);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 26px 0 18px;
+    min-width: 0;
+}
+.chat-thread { width: 660px; display: flex; flex-direction: column; gap: 18px; padding-bottom: 26px; }
+.chat-turn-user {
+    border-inline-start: 2px solid var(--claude);
+    background: #FFFFFF08;
+    border-start-end-radius: 8px;
+    border-end-end-radius: 8px;
+    padding: 11px 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--fg);
+}
+.chat-turn-assistant { font-size: 13.5px; line-height: 1.65; color: var(--fg); display: flex; flex-direction: column; gap: 12px; }
+.tool-log { display: flex; flex-direction: column; gap: 6px; font-family: var(--mono-font); font-size: 12px; }
+.tool-log .tool-line { display: flex; align-items: center; gap: 9px; color: var(--fg-muted); }
+.tool-log .tool-line .bullet { color: var(--claude); font-size: 8px; }
+.tool-log .tool-line .tool-name { color: var(--fg); }
+.tool-log .tool-line .tool-result { margin-inline-start: auto; color: var(--fg-dim); }
+
+.chat-composer {
+    width: 660px;
+    flex: none;
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    background: var(--chrome);
+    padding: 12px 14px 9px;
+}
+.chat-composer .placeholder { font-size: 13.5px; color: #555555; }
+.chat-composer .composer-footer {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 14px; font-size: 11.5px; color: var(--fg-muted);
+}
+.chat-composer .composer-footer .model { margin-inline-start: auto; display: flex; align-items: center; gap: 5px; }
+.chat-composer .composer-footer .codicon { font-size: 13px; }
+
+/* Status bar */
+#status-bar {
+    height: 30px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 12px;
+    background: var(--chrome);
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--fg-muted);
+}
+#status-bar .status-item { display: flex; align-items: center; gap: 6px; }
+#status-bar .status-item .codicon { font-size: 14px; }
+#status-bar .status-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+#status-bar .chat-switch { display: flex; align-items: center; gap: 16px; }
+#status-bar .chat-switch .codicon { font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="vscode-window">
+
+    <div id="editor-tabs">
+        <div class="tab-list">
+            <div class="tab is-active"><i class="agent-mark is-claude"></i>Claude Code</div>
+            <div class="tab"><i class="agent-mark is-codex"></i>Codex</div>
+        </div>
+        <div class="tab-actions">
+            <i class="agent-mark is-claude"></i>
+            <i class="agent-mark is-codex"></i>
+            <i class="codicon">&#xeb56;</i>
+            <i class="codicon">&#xea7c;</i>
+        </div>
+    </div>
+
+    <div id="workbench">
+        <nav id="activity-bar">
+            <div class="activity-item"><i class="codicon">&#xeaf0;</i></div>
+            <div class="activity-item"><i class="codicon">&#xea6d;</i></div>
+            <div class="activity-item"><i class="codicon">&#xea68;</i></div>
+            <div class="activity-item"><i class="codicon">&#xeb91;</i></div>
+            <div class="activity-item"><i class="codicon">&#xeae6;</i></div>
+            <div class="activity-item"><i class="codicon">&#xea79;</i></div>
+            <div class="activity-item"><i class="agent-mark is-claude"></i></div>
+            <div class="activity-item is-active" id="ai-chats-activity-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="23" height="23"> <path fill="currentColor" d="M9.2 2.5h8.05c1.79 0 3.25 1.46 3.25 3.25v4.9c0 1.79-1.46 3.25-3.25 3.25h-.6v2.63c0 .63-.74.96-1.21.55l-1.35-1.19v-1.99h3.16c.9 0 1.63-.73 1.63-1.63v-5.5c0-.9-.73-1.63-1.63-1.63H9.2c-.9 0-1.63.73-1.63 1.63V6.9H5.95V5.75c0-1.79 1.46-3.25 3.25-3.25Z"/> <path fill="currentColor" d="M3.5 8.1h10.05c1.79 0 3.25 1.46 3.25 3.25v5.4c0 1.79-1.46 3.25-3.25 3.25H9.72l-3.6 3.17c-.47.41-1.21.08-1.21-.55V20H3.5A3.25 3.25 0 0 1 .25 16.75v-5.4A3.25 3.25 0 0 1 3.5 8.1Zm0 1.62c-.9 0-1.63.73-1.63 1.63v5.4c0 .9.73 1.63 1.63 1.63h1.4c.45 0 .81.36.81.81v1.03l2.4-2.11c.15-.13.34-.2.54-.2h4.9c.9 0 1.63-.73 1.63-1.63v-5.4c0-.9-.73-1.63-1.63-1.63H3.5Z"/> </svg></div>
+            <div class="activity-spacer"></div>
+            <div class="activity-item"><i class="codicon">&#xeb99;</i></div>
+            <div class="activity-item"><i class="codicon">&#xeb51;</i></div>
+        </nav>
+
+        <aside id="ai-chats-sidebar">
+            <div class="sidebar-title">
+                <h1>AI Chats</h1>
+                <span class="view-description">All projects</span>
+                <div class="title-actions">
+                    <div class="action"><i class="codicon">&#xea6d;</i></div>
+                    <div class="action"><i class="codicon">&#xeb83;</i></div>
+                    <div class="action"><i class="codicon">&#xeaf1;</i></div>
+                    <div class="action"><i class="codicon">&#xeb37;</i></div>
+                    <div class="action"><i class="codicon">&#xea7c;</i></div>
+                </div>
+            </div>
+            <div id="session-tree"></div>
+        </aside>
+
+        <main id="chat-panel">
+            <div class="chat-thread">
+                <div class="chat-turn-assistant"><p id="chat-answer-zero"></p></div>
+                <div class="chat-turn-user" id="chat-user-first"></div>
+                <div class="chat-turn-assistant"><p id="chat-answer-first"></p></div>
+                <div class="chat-turn-user" id="chat-user"></div>
+                <div class="chat-turn-assistant">
+                    <p id="chat-answer-lead"></p>
+                    <div class="tool-log" id="chat-tools"></div>
+                    <p id="chat-answer-tail"></p>
+                </div>
+            </div>
+            <div class="chat-composer">
+                <div class="placeholder" id="chat-placeholder"></div>
+                <div class="composer-footer">
+                    <span id="chat-mode"></span>
+                    <span class="model">Opus 5 <i class="codicon">&#xeab4;</i></span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="status-bar">
+        <div class="status-item"><i class="codicon">&#xeb3a;</i></div>
+        <div class="status-item"><i class="codicon">&#xea68;</i> main</div>
+        <div class="status-item"><i class="codicon">&#xeac3;</i></div>
+        <div class="chat-switch">
+            <span class="status-item"><i class="codicon">&#xea71;</i> Claude</span>
+            <span class="status-item"><i class="codicon">&#xeabc;</i> Codex</span>
+        </div>
+        <div class="status-item"><i class="codicon">&#xea87;</i> 0 <i class="codicon">&#xea6c;</i> 0</div>
+        <div class="status-right">
+            <div class="status-item"><i class="codicon">&#xeaa2;</i></div>
+        </div>
+    </div>
+</div>
+
+<script src="demo-data.js"></script>
+<script src="demo-render.js"></script>
+</body>
+</html>

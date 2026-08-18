@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+- The session list now marks each conversation with its agent's own logo, matching
+  the icons the Claude and Codex tabs already use.
+- Added `media/` — the mockup used to produce the project screenshots.
+
 ## 1.1.0
 
 - Added the **AI Chats** activity-bar view: one session history merging Claude and
